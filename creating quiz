@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Police Operations Flashcard Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #B0C4DE; color: #101112; }
+        .flashcard { width: 80%; max-width: 500px; margin: 20px auto; padding: 20px; border: 2px solid #1E3A5F; border-radius: 10px; background: #E3F2FD; }
+        .scoreboard { margin-top: 20px; padding: 10px; border: 2px solid #1E3A5F; background: #5D737E; color: white; border-radius: 10px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; background-color: #1E3A5F; color: white; border: none; border-radius: 5px; }
+        button:hover { background-color: #14243B; }
+        .option { display: block; padding: 10px; margin: 5px auto; border: 1px solid #A8B8D8; border-radius: 5px; background: #F7F2EF; cursor: pointer; }
+        .option:hover { background-color: #A8B8D8; }
+        .selected { background-color: #A8B8D8; border: 2px solid #333; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Police Operations Flashcard Quiz</h1>
+    <div id="instructions">
+        <p><strong>Instructions:</strong> Enter your name below and click "Start" to begin the quiz. Choose and click your answer then click "Submit" to check your answer. Once you answer the last question, <strong>take a screenshot</strong> of your final score and submit it in canvas.</p>
+    </div>
+    <div id="nameEntry">
+        <p>Enter your name to start:</p>
+        <input type="text" id="playerName" placeholder="Enter Surname...">
+        <button onclick="startGame()">Start</button>
+    </div>
+    <div id="quizContainer" class="hidden">
+        <div id="flashcard" class="flashcard">
+            <p id="question"></p>
+            <div id="options"></div>
+            <button id="submitBtn" onclick="checkAnswer()" disabled>Submit</button>
+            <p id="feedback"></p>
+        </div>
+        <button id="nextButton" onclick="nextCard()">Next</button>
+        <div class="scoreboard">
+            <p>Score: <span id="score">0</span></p>
+            <p>Attempts: <span id="attempts">0</span></p>
+        </div>
+        <div id="finalScore" class="hidden">
+            <h2>Quiz Completed!</h2>
+            <p>Your final score is: <span id="finalPoints">0</span></p>
+        </div>
+    </div>
+    <script>
+        let playerName = "";
+        let currentCard = 0;
+        let score = 0;
+        let attempts = 0;
+        let quizCompleted = false;
+
+        function startGame() {
+            playerName = document.getElementById("playerName").value.trim();
+            if (playerName === "") {
+                alert("Please enter your name to start.");
+                return;
+            }
+            document.getElementById("nameEntry").classList.add("hidden");
+            document.getElementById("quizContainer").classList.remove("hidden");
+            loadCard();
+        }
+
+        const flashcards = [
+            { question: "What document must be filed to use an Alternative Recording Device (ARD) when a Body-Worn Camera (BWC) is unavailable?", options: ["Incident Report", "Search Warrant", "Ex Parte Motion", "Coordination Form"], answer: "Ex Parte Motion" },
+            { question: "What type of force is used only as a last resort in the Force Continuum?", options: ["Non-Lethal", "Less-Lethal", "Lethal", "De-escalation"], answer: "Lethal" },
+            { question: "What factors influence the reasonableness of force used by police?", options: ["Number of aggressors", "Type of weapon used", "Physical condition of the suspect", "All of the above"], answer: "All of the above" },
+            { question: "Which of the following is a requirement for police personnel during planned operations?", options: ["Must wear prescribed police uniforms", "Must conduct operations alone", "Must not record the operation", "Must avoid using marked police vehicles"], answer: "Must wear prescribed police uniforms" },
+            { question: "Who must approve Pre-Operational Clearance before a planned police operation?", options: ["Any police officer", "The Team Leader", "The Chief, Commander, Head of Office, or Unit", "The Mayor"], answer: "The Chief, Commander, Head of Office, or Unit" },
+            { question: "What is the required resolution for an Alternative Recording Device (ARD)?", options: ["480p", "720p", "1080p", "4K"], answer: "720p" },
+            { question: "Which of the following is NOT a requirement for ARDs?", options: ["GPS capability", "Data and timestamping", "10-hour battery life", "Storage for 8 hours of continuous footage"], answer: "10-hour battery life" },
+            { question: "When is a police officer allowed to not issue a verbal warning before using force?", options: ["Always", "When there is an imminent threat", "Only when dealing with armed suspects", "Never"], answer: "When there is an imminent threat" },
+            { question: "What approach is used first in the Force Continuum?", options: ["Lethal", "Less-Lethal", "Non-Lethal", "Tactical Retreat"], answer: "Non-Lethal" },
+            { question: "What is the primary purpose of using Body-Worn Cameras (BWCs) in police operations?", options: ["To broadcast live footage to the public", "To document law enforcement activities accurately", "To replace written reports", "To track police locations in real-time"], answer: "To document law enforcement activities accurately" },
+            { question: "Which of the following is NOT considered a Less-Lethal weapon?", options: ["Batons", "Pepper spray", "Stun guns", "Firearms"], answer: "Firearms" },
+            { question: "What is one of the prohibited actions during police intervention operations?", options: ["Using a megaphone to issue commands", "Firing warning shots", "Using hand signals", "Wearing tactical gear"], answer: "Firing warning shots" },
+            { question: "When can officers turn off recording devices such as BWCs?", options: ["During personal breaks or restroom use", "Only when instructed by their superior", "Never, as they must always be recording", "When suspects request privacy"], answer: "During personal breaks or restroom use" },
+            { question: "What document must officers file if they need to use an ARD instead of a BWC during an arrest?", options: ["A search warrant", "An incident report", "An ex parte motion", "A case summary"], answer: "An ex parte motion" },
+            { question: "What is the primary duty of a police officer?", options: ["Serve and protect", "Issue fines", "Arrest people", "Patrol the streets"], answer: "Serve and protect" },
+            { question: "Which device ensures accurate documentation of police activities?", options: ["CCTV", "Body-Worn Camera", "Dashcam", "Mobile Phone"], answer: "Body-Worn Camera" },
+            { question: "What should officers do before using force?", options: ["Fire a warning shot", "Issue a verbal warning", "Tackle the suspect", "Call for backup"], answer: "Issue a verbal warning" },
+            { question: "When is an officer allowed to use deadly force?", options: ["Whenever they feel like it", "As a last resort", "During routine patrols", "To intimidate suspects"], answer: "As a last resort" },
+            { question: "What document authorizes police to conduct a search?", options: ["Arrest warrant", "Search warrant", "Court order", "Police directive"], answer: "Search warrant" },
+            { question: "What must team leaders secure before conducting planned operations?", options: ["Pre-Operational Clearance", "Search Warrant", "Mission Order", "None"], answer: "Pre-Operational Clearance" },
+            { question: "Who must approve a Pre-Operational Clearance?", options: ["Chief", "Station Commander", "Head of Office", "All of the above"], answer: "All of the above" }
+        ];
+
+        function loadCard() {
+            if (quizCompleted) return;
+            let card = flashcards[currentCard];
+            document.getElementById("question").innerText = card.question;
+            let optionsDiv = document.getElementById("options");
+            optionsDiv.innerHTML = "";
+            card.options.forEach(option => {
+                let button = document.createElement("div");
+                button.classList.add("option");
+                button.innerText = option;
+                button.onclick = function() { selectAnswer(button, option); };
+                optionsDiv.appendChild(button);
+            });
+            document.getElementById("feedback").innerText = "";
+            document.getElementById("submitBtn").disabled = true;
+        }
+
+        function selectAnswer(button, answer) {
+            document.querySelectorAll(".option").forEach(btn => btn.classList.remove("selected"));
+            button.classList.add("selected");
+            document.getElementById("submitBtn").disabled = false;
+        }
+
+        function checkAnswer() {
+            if (quizCompleted) return;
+            let selected = document.querySelector(".option.selected");
+            if (!selected) return;
+            let userAnswer = selected.innerText;
+            let correctAnswer = flashcards[currentCard].answer;
+            attempts++;
+            document.getElementById("attempts").innerText = attempts;
+            if (userAnswer === correctAnswer) {
+                document.getElementById("feedback").innerText = "Correct!";
+                score++;
+                document.getElementById("score").innerText = score;
+            } else {
+                document.getElementById("feedback").innerText = "Incorrect. The correct answer is: " + correctAnswer;
+            }
+            document.getElementById("submitBtn").disabled = true;
+        }
+
+        function nextCard() {
+            if (currentCard < flashcards.length - 1) {
+                currentCard++;
+                loadCard();
+            } else {
+                quizCompleted = true;
+                document.getElementById("finalScore").classList.remove("hidden");
+                document.getElementById("finalPoints").innerText = score;
+                document.getElementById("flashcard").classList.add("hidden");
+                document.getElementById("nextButton").classList.add("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
